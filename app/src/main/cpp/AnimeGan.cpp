@@ -28,7 +28,8 @@ cv::Mat AnimeGan::AnimeGan::preProcess(cv::Mat input) {
 
 cv::Mat AnimeGan::AnimeGan::postProcess(cv::Mat input) {
     cv::Mat out;
-    // Undo the pre-processing on the input
+    // Undo the pre-processing on the inpu
+
     cv::Mat floatOut = input*255;
     floatOut.convertTo(out, CV_8UC3);
     return out;

@@ -23,7 +23,7 @@ namespace AnimeGan {
         mutable torch::jit::script::Module mModule;
         std::string FRAMEWORK;
         std::string PYTORCH_PATH = "/data/data/org.infil00p.animegangallerydemo/files/pytorch/";
-        std::string PYTORCH_NHWC_MODEL = "animegan2.pt";
+        std::string PYTORCH_NCHW_MODEL = "animegan2.pt";
         std::string PYTORCH_VULKAN_NHWC_MODEL = "animegan_vulkan_nhwc.pt";
         bool isNHWC;
     };

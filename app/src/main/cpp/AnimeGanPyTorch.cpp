@@ -19,7 +19,7 @@ bool AnimeGan::AnimeGanPyTorch::loadModel(RunMode runMode, bool nhwc) {
     mRunMode = runMode;
     if(runMode == RunMode::CPU) {
 
-            mModule = torch::jit::load(PYTORCH_PATH + PYTORCH_NHWC_MODEL);
+            mModule = torch::jit::load(PYTORCH_PATH + PYTORCH_NCHW_MODEL);
     }
     else
     {
@@ -37,7 +37,7 @@ void AnimeGan::AnimeGanPyTorch::doPredict(cv::Mat &matInput, cv::Mat &outMat, bo
     int64_t height = preProcesedMat.rows;
     float * blob = (float *)(preProcesedMat.data);
 
-    const auto sizes = std::vector<int64_t>{1, 3, 512, 512};
+    const auto sizes = std::vector<int64_t>{3, 512, 512};
     auto stride_arr = c10::get_channels_last_strides_2d(sizes);
     at::Tensor input;
     try
@@ -48,6 +48,7 @@ void AnimeGan::AnimeGanPyTorch::doPredict(cv::Mat &matInput, cv::Mat &outMat, bo
                 at::TensorOptions(at::kFloat));
 
         input = input * 2 - 1;
+        input = input.unsqueeze(0);
     }
     catch( c10::ValueError e)
     {
@@ -82,16 +83,13 @@ void AnimeGan::AnimeGanPyTorch::doPredict(cv::Mat &matInput, cv::Mat &outMat, bo
             outTensor = tmpTensor;
         }
 
-        auto sizes = outTensor.sizes();
-        if(sizes.size() == 4 && sizes[1] == 3){
-            // Convert the data back to Chunky from Planar
-            outTensor = outTensor.permute({0, 3, 1, 2});
-        }
+        // Let's do the post-processing entirely in PyTorch
+        outTensor = outTensor.squeeze().detach();
+        outTensor = outTensor.clip(-1, 1) * 0.5 + 0.5;
+        outTensor = outTensor.permute({1, 2, 0}).contiguous();
+        outTensor = outTensor.mul(255).clamp(0, 255).to(torch::kU8);
 
-        outTensor = outTensor.squeeze().clip(-1, 1) * 0.5 + 0.5;
-
-        cv::Mat outputFloat(cv::Size(sizes[2],sizes[3]), CV_32F, outTensor.data_ptr());
-        outMat = postProcess(outputFloat);
+        outMat = cv::Mat(cv::Size(512, 512), CV_8UC3, outTensor.data_ptr());
     }
 
 }
