@@ -38,7 +38,7 @@ Java_org_infil00p_animegangallerydemo_MainActivity_startPredict(JNIEnv *env, job
     cv::imwrite(outputPath, outMat);
 
     //Write to the byte buffer
-    return env->NewStringUTF(externalPath.c_str());
+    return env->NewStringUTF(outputPath.c_str());
 }
 
 extern "C"
@@ -48,4 +48,28 @@ Java_org_infil00p_animegangallerydemo_MainActivity_startPredictWithGPU(JNIEnv *e
                                                                        jstring external_file_path,
                                                                        jint height, jint width) {
 
+    std::string externalPath = std::string(env->GetStringUTFChars(external_file_path, nullptr));
+    bool isNHWC=true;
+    bool isGPU=true;
+
+    auto now = std::chrono::system_clock::now();
+    auto UTC = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+
+    // Endianness matters, ARGB8888 in Android Speak is BGRA in reality
+    jbyte* buff = (jbyte*)env->GetDirectBufferAddress(buffer);
+    cv::Mat rgbaMat(height, width, CV_8UC4, buff);
+    cv::Mat rgbMat, outMat;
+    cv::cvtColor(rgbaMat, rgbMat, cv::COLOR_BGRA2RGB);
+
+    AnimeGan::AnimeGanPyTorch model;
+    // We always use NHWC
+    model.loadModel(AnimeGan::RunMode::GPU, isNHWC);
+    model.doPredict(rgbMat, outMat, isGPU);
+
+    //Figure out where to save the mat
+    std::string outputPath = externalPath + "/anime_gan_" + std::to_string(UTC) + ".png";
+    cv::imwrite(outputPath, outMat);
+
+    //Write to the byte buffer
+    return env->NewStringUTF(externalPath.c_str());
 }

@@ -23,7 +23,7 @@ cv::Mat AnimeGan::AnimeGan::preProcess(cv::Mat input) {
     resizedImage.convertTo(resizedImage, CV_32F, 1.0 / 255);
     cv::dnn::blobFromImage(resizedImage, out);
 
-    return out;
+    return resizedImage;
 }
 
 cv::Mat AnimeGan::AnimeGan::postProcess(cv::Mat input) {

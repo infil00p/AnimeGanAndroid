@@ -53,6 +53,9 @@ class MainActivity : AppCompatActivity() {
                 if (external != null) {
                     predictVal = startPredict(byteBuffer, external.absolutePath,
                         mainBitmap!!.height, mainBitmap!!.width)
+                    mainBitmap = BitmapFactory.decodeFile(predictVal)
+                    binding.imageView.setImageBitmap(mainBitmap)
+                    binding.imageView.invalidate()
                 }
             }
         }

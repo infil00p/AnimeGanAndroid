@@ -19,7 +19,7 @@ bool AnimeGan::AnimeGanPyTorch::loadModel(RunMode runMode, bool nhwc) {
     mRunMode = runMode;
     if(runMode == RunMode::CPU) {
 
-            mModule = torch::jit::load(PYTORCH_PATH + PYTORCH_NCHW_MODEL);
+            mModule = torch::jit::load(PYTORCH_PATH + PYTORCH_NHWC_MODEL);
     }
     else
     {
@@ -35,9 +35,11 @@ void AnimeGan::AnimeGanPyTorch::doPredict(cv::Mat &matInput, cv::Mat &outMat, bo
     cv::Mat preProcesedMat = preProcess(matInput);
     int64_t width = preProcesedMat.cols;
     int64_t height = preProcesedMat.rows;
+    preProcesedMat = preProcesedMat * 2 - 1;
+
     float * blob = (float *)(preProcesedMat.data);
 
-    const auto sizes = std::vector<int64_t>{3, 512, 512};
+    const auto sizes = std::vector<int64_t>{1, 3, 512, 512};
     auto stride_arr = c10::get_channels_last_strides_2d(sizes);
     at::Tensor input;
     try
@@ -45,10 +47,9 @@ void AnimeGan::AnimeGanPyTorch::doPredict(cv::Mat &matInput, cv::Mat &outMat, bo
         input = torch::from_blob(
                 blob,
                 torch::IntArrayRef(sizes),
-                at::TensorOptions(at::kFloat));
-
-        input = input * 2 - 1;
-        input = input.unsqueeze(0);
+                torch::IntArrayRef(stride_arr),
+                at::TensorOptions(at::kFloat)
+                        .memory_format(at::MemoryFormat::ChannelsLast));
     }
     catch( c10::ValueError e)
     {

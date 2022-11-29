@@ -46,7 +46,7 @@
         android:layout_height="wrap_content"
         android:text="Predict With GPU"
         app:layout_constraintHeight_percent="0.10"
-        app:layout_constraintTop_toBottomOf="@id/doPredictWithGPU" />
+        app:layout_constraintTop_toBottomOf="@id/doPredict" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
